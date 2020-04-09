@@ -1,0 +1,36 @@
+- target: 'latextank'
+  ip: 10.11.4.51
+  rack: 0
+  slot: 2
+  databases:
+    - number: 1
+      start: 0
+      size: 96
+      values:
+        - name:
+          datatype: 2
+          offset: 22
+        - name:
+            datatype: 2
+            offset: 22
+        - name:
+            datatype: 2
+            offset: 22
+- target: 'latextank'
+  ip: 10.11.4.51
+  rack: 0
+  slot: 2
+  databases:
+    - number: 1
+      start: 0
+      size: 96
+      values:
+        - name:
+          datatype: 2
+          offset: 22
+        - name:
+            datatype: 2
+            offset: 22
+        - name:
+            datatype: 2
+            offset: 22

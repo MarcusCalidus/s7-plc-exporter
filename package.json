@@ -1,0 +1,46 @@
+{
+    "author": {
+        "name": "Marco Warm",
+        "email": "MarcusCalidus@gmail.com",
+        "url": "https://github.com/MarcusCalidus"
+    },
+    "dependencies": {
+        "@types/moment": "^2.13.0",
+        "@types/node-snap7": "^0.2.19",
+        "@types/yamljs": "^0.2.30",
+        "express": "^4.17.1",
+        "moment": "^2.24.0",
+        "node-snap7": "^1.0.3",
+        "rxjs": "^6.5.5",
+        "yamljs": "^0.3.0"
+    },
+    "description": "",
+    "devDependencies": {
+        "@types/express": "^4.17.4",
+        "@types/node": "^13.11.0",
+        "concurrently": "^5.1.0",
+        "nodemon": "^2.0.2",
+        "tslint": "^6.1.1",
+        "typescript": "^3.8.3"
+    },
+    "keywords": [
+        "Prometheus"
+    ],
+    "license": "MIT",
+    "main": "dist/index.js",
+    "name": "s7-plc-exporter",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/MarcusCalidus/s7-plc-exporter"
+    },
+    "scripts": {
+        "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+        "postinstall": "npm run configure",
+        "configure": "node configure.js && npm run build",
+        "build": "tsc",
+        "_prestart": "npm run build",
+        "start": "nodemon",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "version": "1.0.0"
+}
