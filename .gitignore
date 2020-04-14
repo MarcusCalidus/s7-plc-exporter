@@ -2,3 +2,4 @@
 /node_modules
 /src/config*.ts
 /.idea
+/config/targets.yaml
