@@ -24,22 +24,22 @@ You will have to create a targets.yaml before you can start the server!
   slot:     2                           # Slot of the S7 PLC
   label:    target=1                    # OPTIONAL label for all metrics on this target
   db:                                   # List of DBs to query from
-    - number: 7                         # DB number
+    - number:   7                       # DB number
       metrics:                          # List of metrics to query from DB
         - name:         locked_status   # name of metric as it appears to Prometheus
           datatype:     bool            # Datatype of value in PLC (bool|byte|real|word|dword|int|dint)
           metricType:   gauge           # Type of metric as it appears to Prometheus (currently only gauge is supported)
           help:         Locked Status   # HELP string as it appears to Prometheus
-          offset: 0                     # Memory offset of value as defined in STEP 7 (TIA Portal)
+          offset:       0               # Memory offset of value as defined in STEP 7 (TIA Portal)
         - name:         extraction_status
           datatype:     bool
           metricType:   gauge
           help:         Extraction Status
           multiple:                     # ALTERNATIVELY to offset it is possible to query multiple values for one metric
-            - offset:   8.2             # Offset kann be written in 0.0 to 0.7 steps to read bitwise
-              label:    tank=1          # Define labels to distinguish the values within one metric
-            - offset:   10.2
-              label:    tank=2
+            - offset:       8.2         # Offset kann be written in 0.0 to 0.7 steps to read bitwise
+              label:        tank=1      # Define labels to distinguish the values within one metric
+            - offset:       10.2
+              label:        tank=2
 ```
 
 ## Running
