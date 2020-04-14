@@ -21,8 +21,7 @@
     },
     "scripts": {
         "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-        "postinstall": "npm run configure",
-        "configure": "node configure.js && npm run build",
+        "postinstall": "npm run build",
         "build": "tsc",
         "_prestart": "npm run build",
         "start": "nodemon",
