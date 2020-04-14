@@ -1,8 +1,32 @@
 {
+    "name": "s7-plc-exporter",
+    "version": "1.0.0",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/MarcusCalidus/s7-plc-exporter"
+    },
+    "keywords": [
+        "Prometheus",
+        "Siemens",
+        "S7",
+        "PLC",
+        "Snap7"
+    ],
     "author": {
         "name": "Marco Warm",
         "email": "MarcusCalidus@gmail.com",
         "url": "https://github.com/MarcusCalidus"
+    },
+    "scripts": {
+        "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
+        "postinstall": "npm run configure",
+        "configure": "node configure.js && npm run build",
+        "build": "tsc",
+        "_prestart": "npm run build",
+        "start": "nodemon",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
         "@types/moment": "^2.13.0",
@@ -22,25 +46,5 @@
         "nodemon": "^2.0.2",
         "tslint": "^6.1.1",
         "typescript": "^3.8.3"
-    },
-    "keywords": [
-        "Prometheus"
-    ],
-    "license": "MIT",
-    "main": "dist/index.js",
-    "name": "s7-plc-exporter",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/MarcusCalidus/s7-plc-exporter"
-    },
-    "scripts": {
-        "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-        "postinstall": "npm run configure",
-        "configure": "node configure.js && npm run build",
-        "build": "tsc",
-        "_prestart": "npm run build",
-        "start": "nodemon",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "version": "1.0.0"
+    }
 }

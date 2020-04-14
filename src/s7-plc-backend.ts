@@ -112,14 +112,14 @@ export class S7PlcBackend {
         return new Observable<ResultValue[]>(
             subscriber => {
                 s7Client.DBGet(db.number,
-                    (err, data) => {
+                    (err, buffer) => {
                         if (err) {
                             subscriber.error('Error getting DB ' +
                                 s7Client.ErrorText(err) + ' (' + err + ')')
                         } else {
-                            let observables: any[] = [];
+                            const observables: any[] = [];
                             db.metrics.forEach(
-                                value => observables.push(this.handleValue(data, value))
+                                value => observables.push(this.handleValue(buffer, value))
                             );
                             merge(...observables)
                                 .pipe(

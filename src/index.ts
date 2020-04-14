@@ -10,11 +10,11 @@ app.get('/valuesJson', (req, res) => {
     s7PlcBackend.getValues()
         .subscribe(
         data => {
-            res.end(JSON.stringify({success: true, data: data}));
+            res.end(JSON.stringify({success: true, data}));
         },
         error => {
             res.statusCode = 500;
-            res.end(JSON.stringify({success: false, error: error}))
+            res.end(JSON.stringify({success: false, error}))
         }
     );
 });
