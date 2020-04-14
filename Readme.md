@@ -1,5 +1,8 @@
 # s7-plc-exporter - a Prometheus exporter for Siemens S7 PLC
 
+s7-plc-exporter is a generic Prometheus exporter for 
+values from Siemens S7 PLC (See [sompatibilty](http://snap7.sourceforge.net/snap7_client.html#target_compatibility))
+
 ## Prerequisites
 In order to run s7-plc-exporter you need Node.js installed on your system.
 
@@ -38,3 +41,6 @@ e.g. http://localhost:9693/values
 
 Raw JSON Data like so: http://{YourExporterServer}:9693/valuesJson
 ```
+
+
+[Compatibility]: http://snap7.sourceforge.net/snap7_client.html#target_compatibility

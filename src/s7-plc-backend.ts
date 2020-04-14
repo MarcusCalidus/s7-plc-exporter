@@ -4,75 +4,98 @@ import * as path from 'path';
 import {merge, Observable} from "rxjs";
 import {toArray} from "rxjs/internal/operators";
 import {flatMap} from "rxjs/operators";
+import {hasOwnProperty} from "tslint/lib/utils";
 
-interface PlcValue {
+type PlcDatatype = 'bool' | 'byte' | 'real' | 'word' | 'dword' | 'int' | 'dint';
+
+interface PlcBaseMetric {
     name: string;
     metricType: 'gauge' | 'counter' | 'histogram' | 'summary';
     help: string;
-    label?: string;
-    datatype: 'bool' | 'byte' | 'real' | 'word' | 'dword' | 'int' | 'dint';
+    datatype: PlcDatatype;
+}
+
+interface PlcSingleMetric extends PlcBaseMetric {
     offset: number;
 }
 
-interface Database {
+interface PlcMultipleMetric extends PlcBaseMetric {
+    multiple: {
+        offset: number,
+        label: string
+    }[]
+}
+
+interface DB {
     number: number;
-    values: PlcValue[];
+    metrics: PlcBaseMetric[];
 }
 
 export interface Target {
-    name: string;
     ip: string;
     rack: number;
     slot: number;
-    databases: Database[];
+    label?: string;
+    db: DB[];
 }
 
 export class S7PlcBackend {
     config: Target[] = Yaml.load(path.join(__dirname, '../config/targets.yaml'));
     currentValues: any = {};
 
-    handleValue(buffer: Buffer, plcValue: PlcValue) {
+    getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number) {
+        switch (datatype) {
+            case "real":
+                return buffer.readFloatBE(offset);
+            case "int":
+                return buffer.readInt16BE(offset);
+            case "dint":
+                return buffer.readInt32BE(offset);
+            case "word":
+                return buffer.readUInt16BE(offset);
+            case "dword":
+                return buffer.readUInt32BE(offset);
+            case "byte":
+                return buffer.readUInt8(offset);
+            case 'bool':
+                const value = buffer.readUInt8(Math.trunc(offset));
+                const offsetShift = (Math.round((offset % 1) * 10));
+                return (value >> offsetShift) & 1;
+            default:
+                throw new Error('Unknown datatype ' + datatype + ' in config')
+        }
+    }
+
+    handleValue(buffer: Buffer, plcMetric: PlcBaseMetric) {
         return new Observable(
             subscriber => {
-                let value: any;
-                switch (plcValue.datatype) {
-                    case "real":
-                        value = buffer.readFloatBE(plcValue.offset);
-                        break;
-                    case "int":
-                        value = buffer.readInt16BE(plcValue.offset);
-                        break;
-                    case "dint":
-                        value = buffer.readInt32BE(plcValue.offset);
-                        break;
-                    case "word":
-                        value = buffer.readUInt16BE(plcValue.offset);
-                        break;
-                    case "dword":
-                        value = buffer.readUInt32BE(plcValue.offset);
-                        break;
-                    case "byte":
-                        value = buffer.readUInt8(plcValue.offset);
-                        break;
-                    case 'bool':
-                        value = buffer.readUInt8(Math.trunc(plcValue.offset));
-                        const offsetShift = (Math.round((plcValue.offset % 1) * 10));
-                        value = (value >> offsetShift) & 1;
-                        break;
-                    default:
-                        subscriber.error('Unknown datatype ' + plcValue.datatype + ' in config')
+                if (hasOwnProperty(plcMetric, 'offset')) {
+                    const value = this.getValueAtOffset(buffer, plcMetric.datatype, (plcMetric as PlcSingleMetric).offset);
+                    subscriber.next({
+                        metric: plcMetric,
+                        value: value,
+                    });
+                } else if (hasOwnProperty(plcMetric, 'multiple'))  {
+                    (plcMetric as PlcMultipleMetric).multiple.forEach(
+                        item => {
+                            const value = this.getValueAtOffset(buffer, plcMetric.datatype, item.offset);
+                            subscriber.next({
+                                metric: plcMetric,
+                                label: item.label,
+                                value: value,
+                            });
+                        }
+                    )
+                } else {
+                    subscriber.error('neither "offset" nor "multiple" attribute found in config for metric ' + plcMetric.name)
                 }
 
-                subscriber.next({
-                    plcValue: plcValue,
-                    value: value,
-                });
                 subscriber.complete();
             }
         )
     }
 
-    handleDb(s7Client: S7Client, db: Database) {
+    handleDb(s7Client: S7Client, db: DB) {
         return new Observable(
             subscriber => {
                 s7Client.DBGet(db.number,
@@ -81,18 +104,18 @@ export class S7PlcBackend {
                             subscriber.error('Error getting DB ' +
                                 s7Client.ErrorText(err) + ' (' + err + ')')
                         } else {
-                            db.values.forEach(
+                            db.metrics.forEach(
                                 (value, idx, values) => this.handleValue(data, value)
-                                .subscribe(
-                                    handledValue => {
-                                        subscriber.next(handledValue);
-                                        if (values.length === idx + 1) {
-                                            subscriber.complete();
-                                        }
-                                    },
-                                    error => subscriber.error(error)
-                                )
-                        )
+                                    .subscribe(
+                                        handledValue => {
+                                            subscriber.next(handledValue);
+                                            if (values.length === idx + 1) {
+                                                subscriber.complete();
+                                            }
+                                        },
+                                        error => subscriber.error(error)
+                                    )
+                            )
                         }
                     }
                 )
@@ -101,7 +124,7 @@ export class S7PlcBackend {
 
     }
 
-    handleTarget(target: Target): Observable<PlcValue[]> {
+    handleTarget(target: Target): Observable<PlcBaseMetric[]> {
         return new Observable(
             subscriber => {
                 const client = new S7Client();
@@ -113,20 +136,21 @@ export class S7PlcBackend {
                         if (err) {
                             subscriber.error('Error connecting to PLC -' + client.ErrorText(err) + ' (' + err + ')');
                         } else {
-                            target.databases.forEach(
-                                (database, idx, databases) => this.handleDb(client, database)
-                                    .pipe(
-                                        toArray<PlcValue>(),
-                                    )
-                                    .subscribe(
-                                        handledValue => {
-                                            subscriber.next(handledValue);
-                                            if (databases.length === idx + 1) {
-                                                subscriber.complete();
-                                            }
-                                        },
-                                        error => subscriber.error(error)
-                                    )
+                            target.db.forEach(
+                                (db, idx, dbArray) =>
+                                    this.handleDb(client, db)
+                                        .pipe(
+                                            toArray<PlcBaseMetric>(),
+                                        )
+                                        .subscribe(
+                                            handledValue => {
+                                                subscriber.next(handledValue);
+                                                if (dbArray.length === idx + 1) {
+                                                    subscriber.complete();
+                                                }
+                                            },
+                                            error => subscriber.error(error)
+                                        )
                             )
                         }
                     }

@@ -1,66 +1,67 @@
-- name: 'latextank'
-  ip: 10.11.4.51
+- ip: 10.11.4.51
   rack: 0
   slot: 2
-  databases:
+  db:
     - number: 7
-      values:
-        - name: t3_locked_status
+      metrics:
+        - name: locked_status
           datatype: bool
           metricType: gauge
-          offset: 8
-          help: Tank3 gesperrt Status
-        - name: t3_extraction_status
+          help: locked Status
+          multiple:
+            - offset: 8
+              label: tank=1
+            - offset: 10
+              label: tank=4
+        - name: extraction_status
           datatype: bool
           metricType: gauge
-          offset: 8.2
-          help: Tank3 Entnahme Status
-        - name: t4_locked_status
-          datatype: bool
-          metricType: gauge
-          offset: 10
-          help: Tank4 gesperrt Status
-        - name: t4_extraction_status
-          datatype: bool
-          metricType: gauge
-          offset: 10.2
-          help: Tank4 Entnahme Status
+          help: Entnahme Status
+          multiple:
+            - offset: 8.2
+              label: tank=3
+            - offset: 10.2
+              label: tank=4
     - number: 9
-      values:
-        - name: t1_is_tons
+      metrics:
+        - name: fill_tons
           datatype: real
           metricType: gauge
-          offset: 0
-          help: Tank1 Ist Tonnen
-        - name: t2_is_tons
-          datatype: real
-          metricType: gauge
-          offset: 12
-          help: Tank2 Ist Tonnen
-        - name: t3_is_tons
-          datatype: real
-          metricType: gauge
-          offset: 24
-          help: Tank3 Ist Tonnen
+          help: Ist Tonnen
+          multiple:
+            - offset: 0
+              label: tank=1
+            - offset: 12
+              label: tank=2
+            - offset: 24
+              label: tank=3
 - name: 'latextank'
   ip: 10.11.4.51
   rack: 0
   slot: 2
-  databases:
-    - number: 3
-      values:
-        - name: t1_fill_level_percent
-          datatype: int
+  db:
+    - number: 1
+      metrics:
+        - name: operation_automatic_status
+          datatype: bool
+          metricType: gauge
+          help: Automatikbetrieb
           offset: 0
+        - name: operation_manual_status
+          datatype: bool
           metricType: gauge
-          help: T1 Füllstand Prozent
-        - name: t2_fill_level_percent
+          help: Manueller Betrieb
+          offset: 0.1
+    - number: 3
+      metrics:
+        - name: fill_level_percent
           datatype: int
-          offset: 2
           metricType: gauge
-          help: T2 Füllstand Prozent
-        - name: t3_fill_level_percent
-          datatype: int
-          offset: 4
-          metricType: gauge
-          help: T3 Füllstand Prozent
+          help: Füllstand Prozent
+          multiple:
+            - offset: 0
+              label: tank=1
+            - offset: 2
+              label: tank=2
+            - offset: 4
+              label: tank=3
