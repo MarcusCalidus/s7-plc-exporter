@@ -36,8 +36,7 @@
               label: tank=2
             - offset: 24
               label: tank=3
-- name: 'latextank'
-  ip: 10.11.4.51
+- ip: 10.11.4.51
   rack: 0
   slot: 2
   db:
