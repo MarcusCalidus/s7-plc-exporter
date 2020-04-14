@@ -2,7 +2,7 @@ import {S7Client} from 'node-snap7';
 import * as Yaml from 'yamljs';
 import * as path from 'path';
 import {merge, Observable} from "rxjs";
-import {toArray} from "rxjs/internal/operators";
+import {map, toArray} from "rxjs/internal/operators";
 import {flatMap} from "rxjs/operators";
 import {hasOwnProperty} from "tslint/lib/utils";
 
@@ -39,11 +39,17 @@ export interface Target {
     db: DB[];
 }
 
+export interface ResultValue {
+    metric: PlcBaseMetric,
+    label?: string[];
+    value: number;
+}
+
 export class S7PlcBackend {
     config: Target[] = Yaml.load(path.join(__dirname, '../config/targets.yaml'));
     currentValues: any = {};
 
-    getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number) {
+    getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number): number {
         switch (datatype) {
             case "real":
                 return buffer.readFloatBE(offset);
@@ -66,23 +72,24 @@ export class S7PlcBackend {
         }
     }
 
-    handleValue(buffer: Buffer, plcMetric: PlcBaseMetric) {
-        return new Observable(
+    handleValue(buffer: Buffer, plcMetric: PlcBaseMetric): Observable<ResultValue> {
+        return new Observable<ResultValue>(
             subscriber => {
                 if (hasOwnProperty(plcMetric, 'offset')) {
                     const value = this.getValueAtOffset(buffer, plcMetric.datatype, (plcMetric as PlcSingleMetric).offset);
                     subscriber.next({
                         metric: plcMetric,
-                        value: value,
+                        value,
                     });
-                } else if (hasOwnProperty(plcMetric, 'multiple'))  {
+                } else if (hasOwnProperty(plcMetric, 'multiple')) {
                     (plcMetric as PlcMultipleMetric).multiple.forEach(
                         item => {
                             const value = this.getValueAtOffset(buffer, plcMetric.datatype, item.offset);
+
                             subscriber.next({
                                 metric: plcMetric,
-                                label: item.label,
-                                value: value,
+                                label: [item.label],
+                                value,
                             });
                         }
                     )
@@ -95,8 +102,8 @@ export class S7PlcBackend {
         )
     }
 
-    handleDb(s7Client: S7Client, db: DB) {
-        return new Observable(
+    handleDb(s7Client: S7Client, db: DB): Observable<ResultValue> {
+        return new Observable<ResultValue>(
             subscriber => {
                 s7Client.DBGet(db.number,
                     (err, data) => {
@@ -124,8 +131,8 @@ export class S7PlcBackend {
 
     }
 
-    handleTarget(target: Target): Observable<PlcBaseMetric[]> {
-        return new Observable(
+    handleTarget(target: Target): Observable<ResultValue[]> {
+        return new Observable<ResultValue[]>(
             subscriber => {
                 const client = new S7Client();
                 client.ConnectTo(
@@ -140,7 +147,13 @@ export class S7PlcBackend {
                                 (db, idx, dbArray) =>
                                     this.handleDb(client, db)
                                         .pipe(
-                                            toArray<PlcBaseMetric>(),
+                                            map(value => {
+                                                if (target.label) {
+                                                    value.label = [...(value.label || []), target.label]
+                                                }
+                                                return value;
+                                            }),
+                                            toArray<ResultValue>(),
                                         )
                                         .subscribe(
                                             handledValue => {
@@ -160,13 +173,15 @@ export class S7PlcBackend {
     }
 
     initialize() {
-        let observables: any[] = [];
+        const observables: any[] = [];
         this.config.forEach(
             target => observables.push(this.handleTarget(target))
         );
         merge(...observables)
             .pipe(
-                flatMap(data => data as any),
+                flatMap((data: ResultValue[]) => data),
+                /*     groupBy(value => value.metric.name),
+                     mergeMap(group => group.pipe(toArray())),*/
                 toArray()
             )
             .subscribe(
