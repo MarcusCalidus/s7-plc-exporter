@@ -35,12 +35,9 @@ npx path/to/s7-plc-exporter
 The exporter provides the values as follows
 
 ```
-http://{YourExporterServer}:9693/values
+http://{YourExporterServer}:9712/values
 
-e.g. http://localhost:9693/values
+e.g. http://localhost:9712/values
 
-Raw JSON Data like so: http://{YourExporterServer}:9693/valuesJson
+Raw JSON Data like so: http://{YourExporterServer}:9712/valuesJson
 ```
-
-
-[Compatibility]: http://snap7.sourceforge.net/snap7_client.html#target_compatibility

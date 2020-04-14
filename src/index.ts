@@ -1,7 +1,7 @@
 import express from 'express';
 import {S7PlcBackend} from "./s7-plc-backend";
 
-const serverPort = 8899;
+const serverPort = 9712;
 const app = express();
 const s7PlcBackend = new S7PlcBackend();
 
