@@ -1,6 +1,7 @@
 - ip: 10.11.4.51
   rack: 0
   slot: 2
+  label: target=1
   db:
     - number: 7
       metrics:
@@ -39,7 +40,6 @@
   ip: 10.11.4.51
   rack: 0
   slot: 2
-  label: target=2
   db:
     - number: 1
       metrics:

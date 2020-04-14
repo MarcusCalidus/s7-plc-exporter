@@ -7,20 +7,44 @@ const s7PlcBackend = new S7PlcBackend();
 
 app.get('/valuesJson', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(s7PlcBackend.currentValues));
+    s7PlcBackend.getValues()
+        .subscribe(
+        data => {
+            res.end(JSON.stringify({success: true, data: data}));
+        },
+        error => {
+            res.statusCode = 500;
+            res.end(JSON.stringify({success: false, error: error}))
+        }
+    );
 });
 
 app.get('/values', (req, res) => {
-    const valuePrefix = 's7_';
-    const result: string[] = [];
-    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Type', 'text/plain;charset=utf-8');
 
-
-    res.end(result.join('\n') + '\n');
+    s7PlcBackend.getValues()
+        .subscribe(
+            data => {
+                const result: string[] = [];
+                data.forEach(
+                    metric => {
+                        result.push(`# HELP ${metric[0].metric.name} ${metric[0].metric.help}`);
+                        result.push(`# TYPE ${metric[0].metric.name} ${metric[0].metric.metricType}`);
+                        metric.forEach(
+                            line => result.push(`${line.metric.name}${line.label?'{'+line.label.join(',')+'}':''} ${line.value}`)
+                        );
+                    }
+                );
+                res.end(result.join('\n')+'\n');
+            },
+            error => {
+                res.statusCode = 500;
+                res.end(error)
+            }
+        );
 });
 
 // start the Express server
 app.listen(serverPort, () => {
     console.log(`server started at http://localhost:${serverPort}`);
-    s7PlcBackend.initialize()
 });

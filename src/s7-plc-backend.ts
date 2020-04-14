@@ -2,7 +2,7 @@ import {S7Client} from 'node-snap7';
 import * as Yaml from 'yamljs';
 import * as path from 'path';
 import {merge, Observable} from "rxjs";
-import {map, toArray} from "rxjs/internal/operators";
+import {groupBy, map, mergeMap, toArray} from "rxjs/internal/operators";
 import {flatMap} from "rxjs/operators";
 import {hasOwnProperty} from "tslint/lib/utils";
 
@@ -46,8 +46,14 @@ export interface ResultValue {
 }
 
 export class S7PlcBackend {
-    config: Target[] = Yaml.load(path.join(__dirname, '../config/targets.yaml'));
-    currentValues: any = {};
+    config: Target[];
+
+    constructor() {
+        const configFile = path.join(__dirname, '../config/targets.yaml');
+        console.log('loading config from ', configFile);
+        this.config = Yaml.load(configFile);
+        console.log('config loaded with ', this.config.length, ' targets');
+    }
 
     getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number): number {
         switch (datatype) {
@@ -102,8 +108,8 @@ export class S7PlcBackend {
         )
     }
 
-    handleDb(s7Client: S7Client, db: DB): Observable<ResultValue> {
-        return new Observable<ResultValue>(
+    handleDb(s7Client: S7Client, db: DB): Observable<ResultValue[]> {
+        return new Observable<ResultValue[]>(
             subscriber => {
                 s7Client.DBGet(db.number,
                     (err, data) => {
@@ -111,18 +117,20 @@ export class S7PlcBackend {
                             subscriber.error('Error getting DB ' +
                                 s7Client.ErrorText(err) + ' (' + err + ')')
                         } else {
+                            let observables: any[] = [];
                             db.metrics.forEach(
-                                (value, idx, values) => this.handleValue(data, value)
-                                    .subscribe(
-                                        handledValue => {
-                                            subscriber.next(handledValue);
-                                            if (values.length === idx + 1) {
-                                                subscriber.complete();
-                                            }
-                                        },
-                                        error => subscriber.error(error)
-                                    )
-                            )
+                                value => observables.push(this.handleValue(data, value))
+                            );
+                            merge(...observables)
+                                .pipe(
+                                    toArray()
+                                )
+                                .subscribe(
+                                    (data: ResultValue[]) => {
+                                        subscriber.next(data);
+                                        subscriber.complete();
+                                    }
+                                )
                         }
                     }
                 )
@@ -147,6 +155,7 @@ export class S7PlcBackend {
                                 (db, idx, dbArray) =>
                                     this.handleDb(client, db)
                                         .pipe(
+                                            flatMap(values => values),
                                             map(value => {
                                                 if (target.label) {
                                                     value.label = [...(value.label || []), target.label]
@@ -172,21 +181,17 @@ export class S7PlcBackend {
         )
     }
 
-    initialize() {
+    getValues() {
         const observables: any[] = [];
         this.config.forEach(
             target => observables.push(this.handleTarget(target))
         );
-        merge(...observables)
+        return merge(...observables)
             .pipe(
                 flatMap((data: ResultValue[]) => data),
-                /*     groupBy(value => value.metric.name),
-                     mergeMap(group => group.pipe(toArray())),*/
+                groupBy(value => value.metric.name),
+                mergeMap(group => group.pipe(toArray())),
                 toArray()
-            )
-            .subscribe(
-                data => console.log(data),
-                error => console.error(error)
             );
     }
 }
