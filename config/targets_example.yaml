@@ -1,7 +1,7 @@
 - ip: 10.11.4.51
   rack: 0
   slot: 2
-  label: target=1
+  label: target="1"
   db:
     - number: 7
       metrics:
@@ -13,7 +13,7 @@
             - offset: 8
               label: tank=1
             - offset: 10
-              label: tank=4
+              label: tank="4"
         - name: extraction_status
           datatype: bool
           metricType: gauge
@@ -22,7 +22,7 @@
             - offset: 8.2
               label: tank=3
             - offset: 10.2
-              label: tank=4
+              label: tank="4"
     - number: 9
       metrics:
         - name: fill_tons
@@ -31,11 +31,11 @@
           help: Ist Tonnen
           multiple:
             - offset: 0
-              label: tank=1
+              label: tank="1"
             - offset: 12
-              label: tank=2
+              label: tank="2"
             - offset: 24
-              label: tank=3
+              label: tank="3"
 - ip: 10.11.4.51
   rack: 0
   slot: 2
@@ -60,8 +60,8 @@
           help: Füllstand Prozent
           multiple:
             - offset: 0
-              label: tank=1
+              label: tank="1"
             - offset: 2
-              label: tank=2
+              label: tank="2"
             - offset: 4
-              label: tank=3
+              label: tank="3"

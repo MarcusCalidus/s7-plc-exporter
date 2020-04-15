@@ -22,7 +22,7 @@ You will have to create a targets.yaml before you can start the server!
 - ip:       10.11.4.51                  # IP address of the S7 PLC 
   rack:     0                           # Rack of the S7 PLC
   slot:     2                           # Slot of the S7 PLC
-  label:    target=1                    # OPTIONAL label for all metrics on this target
+  label:    target="1"                  # OPTIONAL label for all metrics on this target
   db:                                   # List of DBs to query from
     - number:   7                       # DB number
       metrics:                          # List of metrics to query from DB
@@ -37,9 +37,9 @@ You will have to create a targets.yaml before you can start the server!
           help:         Extraction Status
           multiple:                     # ALTERNATIVELY to offset it is possible to query multiple values for one metric
             - offset:       8.2         # Offset kann be written in 0.0 to 0.7 steps to read bitwise
-              label:        tank=1      # Define labels to distinguish the values within one metric
+              label:        tank="1"    # Define labels to distinguish the values within one metric
             - offset:       10.2
-              label:        tank=2
+              label:        tank="2"
 ```
 
 ## Running
