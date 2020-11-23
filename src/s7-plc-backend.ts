@@ -151,29 +151,19 @@ export class S7PlcBackend {
                         if (err) {
                             subscriber.error('Error connecting to PLC -' + client.ErrorText(err) + ' (' + err + ')');
                         } else {
-                            target.db.forEach(
-                                (db, idx, dbArray) =>
-                                    this.handleDb(client, db)
-                                        .pipe(
-                                            flatMap(values => values),
-                                            map(value => {
-                                                if (target.label) {
-                                                    value.label = [...(value.label || []), target.label]
-                                                }
-                                                return value;
-                                            }),
-                                            toArray<ResultValue>(),
-                                        )
-                                        .subscribe(
-                                            handledValue => {
-                                                subscriber.next(handledValue);
-                                                if (dbArray.length === idx + 1) {
-                                                    subscriber.complete();
-                                                }
-                                            },
-                                            error => subscriber.error(error)
-                                        )
-                            )
+                            let observableList: Observable<ResultValue>[] = [];
+                            observableList.push(...this.getDBObservables(target, client));
+                            merge(...observableList)
+                                .pipe(
+                                    toArray()
+                                )
+                                .subscribe(
+                                    handledValue => {
+                                        subscriber.next(handledValue);
+                                        subscriber.complete();
+                                    },
+                                    error => subscriber.error(error)
+                                )
                         }
                     }
                 )
@@ -193,5 +183,25 @@ export class S7PlcBackend {
                 mergeMap(group => group.pipe(toArray())),
                 toArray()
             );
+    }
+
+    private getDBObservables(target: Target, client: S7Client): Observable<ResultValue>[] {
+        let observableList: Observable<ResultValue>[] = [];
+        (target.db || []).forEach(
+            (db, idx, dbArray) =>
+                observableList.push(
+                    this.handleDb(client, db)
+                        .pipe(
+                            mergeMap(values => values),
+                            map(value => {
+                                if (target.label) {
+                                    value.label = [...(value.label || []), target.label]
+                                }
+                                return value;
+                            }),
+                        )
+                )
+        )
+        return observableList;
     }
 }
