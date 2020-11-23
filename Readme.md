@@ -42,6 +42,36 @@ You will have to create a targets.yaml before you can start the server!
               label:        tank="2"
 ```
 
+additionally to DBs you also can read other areas of the PLC (inputs, outputs, counters, timers, merkers)
+
+```
+- ip:       10.11.4.51                  # IP address of the S7 PLC 
+  rack:     0                           # Rack of the S7 PLC
+  slot:     2                           # Slot of the S7 PLC
+  label:    target="1"                  # OPTIONAL label for all metrics on this target
+  merkers:                              # type of data to read (inputs|outputs|merkers|timers|counters)
+    - offset: 4                         # offset of data to read
+      size: 1                           # number of words to read - result size depends on word length of data type
+      metrics:                          # metrics are defined like above
+        - name: tank_emptied
+          datatype: bool
+          metricType: gauge
+          help: Tank was emptied
+          multiple:
+            - offset: 0.0
+              label: tank="1"
+            - offset: 0.1
+              label: tank="2"
+            - offset: 0.2
+              label: tank="3"
+            - offset: 0.3
+              label: tank="4"
+            - offset: 0.6
+              label: tank="5"
+            - offset: 0.7
+              label: tank="6"
+```
+
 ## Running
 To start the server run. 
 

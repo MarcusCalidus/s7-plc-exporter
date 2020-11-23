@@ -2,30 +2,77 @@
   rack: 0
   slot: 2
   label: target="1"
+  outputs:
+    - offset: 0
+      size: 1
+      metrics:
+        - name: warn_light_flashing
+          datatype: bool
+          help: Warning light is flashing
+          metricType: gauge
+          offset: 0
+  merkers:
+    - offset: 4
+      size: 1
+      metrics:
+        - name: tank_emptied
+          datatype: bool
+          metricType: gauge
+          help: Tank was emptied
+          multiple:
+            - offset: 0.0
+              label: tank="1"
+            - offset: 0.1
+              label: tank="2"
+            - offset: 0.2
+              label: tank="3"
+            - offset: 0.3
+              label: tank="4"
+            - offset: 0.6
+              label: tank="5"
+            - offset: 0.7
+              label: tank="6"
   db:
     - number: 7
       metrics:
-        - name: locked_status
+        - name: S7_locked_status
           datatype: bool
           metricType: gauge
           help: locked Status
           multiple:
             - offset: 8
-              label: tank=1
+              label: tank="1"
             - offset: 10
               label: tank="4"
-        - name: extraction_status
+        - name: S7_extraction_status
           datatype: bool
           metricType: gauge
           help: Entnahme Status
           multiple:
             - offset: 8.2
-              label: tank=3
+              label: tank="3"
             - offset: 10.2
               label: tank="4"
+        - name: S7_Tank_status
+          datatype: byte
+          metricType: gauge
+          help: Status Tank
+          multiple:
+            - offset: 16
+              label: tank="1"
+            - offset: 18
+              label: tank="2"
+            - offset: 20
+              label: tank="3"
+            - offset: 22
+              label: tank="4"
+            - offset: 24
+              label: tank="5"
+            - offset: 26
+              label: tank="6"
     - number: 9
       metrics:
-        - name: fill_tons
+        - name: S7_fill_tons
           datatype: real
           metricType: gauge
           help: Ist Tonnen
@@ -36,25 +83,27 @@
               label: tank="2"
             - offset: 24
               label: tank="3"
-- ip: 10.11.4.51
-  rack: 0
-  slot: 2
-  db:
+            - offset: 36
+              label: tank="4"
+            - offset: 48
+              label: tank="5"
+            - offset: 60
+              label: tank="6"
     - number: 1
       metrics:
-        - name: operation_automatic_status
+        - name: S7_operation_automatic_status
           datatype: bool
           metricType: gauge
           help: Automatikbetrieb
           offset: 0
-        - name: operation_manual_status
+        - name: S7_operation_manual_status
           datatype: bool
           metricType: gauge
           help: Manueller Betrieb
           offset: 0.1
     - number: 3
       metrics:
-        - name: fill_level_percent
+        - name: S7_fill_level_percent
           datatype: int
           metricType: gauge
           help: Füllstand Prozent
@@ -65,3 +114,9 @@
               label: tank="2"
             - offset: 4
               label: tank="3"
+            - offset: 6
+              label: tank="4"
+            - offset: 190
+              label: tank="5"
+            - offset: 192
+              label: tank="6"
