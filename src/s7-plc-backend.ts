@@ -1,7 +1,7 @@
 import {S7Client} from 'node-snap7';
 import * as Yaml from 'yamljs';
 import * as path from 'path';
-import {concat, merge, Observable} from "rxjs";
+import {concat, merge, Observable, Subscriber} from "rxjs";
 import {groupBy, map, mergeMap, toArray} from "rxjs/internal/operators";
 import {hasOwnProperty} from "tslint/lib/utils";
 
@@ -36,6 +36,8 @@ interface PlcMultipleMetric extends PlcBaseMetric {
 
 interface DB {
     number: number;
+    start?: number;
+    size?: number;
     metrics: PlcBaseMetric[];
 }
 
@@ -132,29 +134,63 @@ export class S7PlcBackend {
     handleDb(s7Client: S7Client, db: DB): Observable<ResultValue[]> {
         return new Observable<ResultValue[]>(
             subscriber => {
-                s7Client.DBGet(db.number,
-                    (err, buffer) => {
-                        if (err) {
-                            subscriber.error('Error getting DB ' +
-                                s7Client.ErrorText(err) + ' (' + err + ')')
-                        } else {
-                            const observables: any[] = [];
-                            db.metrics.forEach(
-                                value => observables.push(this.handleValue(buffer, value))
-                            );
-                            merge(...observables)
-                                .pipe(
-                                    toArray()
-                                )
-                                .subscribe(
-                                    (data: ResultValue[]) => {
-                                        subscriber.next(data);
-                                        subscriber.complete();
-                                    }
-                                )
-                        }
-                    }
-                )
+                if (db.size) {
+                    this.performDBRead(s7Client, db, subscriber);
+                } else {
+                    this.performDBGet(s7Client, db, subscriber);
+                }
+            }
+        )
+    }
+
+    private performDBRead(s7Client: S7Client, db: DB, subscriber: Subscriber<ResultValue[]>) {
+        s7Client.DBRead(db.number, db.start, db.size,
+            (err, buffer) => {
+                if (err) {
+                    subscriber.error('Error getting DB ' +
+                        s7Client.ErrorText(err) + ' (' + err + ')')
+                } else {
+                    const observables: any[] = [];
+                    db.metrics.forEach(
+                        value => observables.push(this.handleValue(buffer, value))
+                    );
+                    merge(...observables)
+                        .pipe(
+                            toArray()
+                        )
+                        .subscribe(
+                            (data: ResultValue[]) => {
+                                subscriber.next(data);
+                                subscriber.complete();
+                            }
+                        )
+                }
+            }
+        )
+    }
+
+    private performDBGet(s7Client: S7Client, db: DB, subscriber: Subscriber<ResultValue[]>) {
+        s7Client.DBGet(db.number,
+            (err, buffer) => {
+                if (err) {
+                    subscriber.error('Error getting DB ' +
+                        s7Client.ErrorText(err) + ' (' + err + ')')
+                } else {
+                    const observables: any[] = [];
+                    db.metrics.forEach(
+                        value => observables.push(this.handleValue(buffer, value))
+                    );
+                    merge(...observables)
+                        .pipe(
+                            toArray()
+                        )
+                        .subscribe(
+                            (data: ResultValue[]) => {
+                                subscriber.next(data);
+                                subscriber.complete();
+                            }
+                        )
+                }
             }
         )
     }
@@ -293,8 +329,8 @@ export class S7PlcBackend {
     }
 
     private getAreaObservables(target: Target, client: S7Client, s7Area: Area) {
-        let readFunction: AreaReadFunction = undefined;
-        let areaList = undefined;
+        let readFunction: AreaReadFunction;
+        let areaList;
         switch (s7Area) {
             case Area.S7AreaPE:
                 readFunction = client.EBRead.bind(client);

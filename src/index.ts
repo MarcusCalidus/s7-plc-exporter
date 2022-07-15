@@ -24,14 +24,14 @@ app.get('/values', (req, res) => {
 
     s7PlcBackend.getValues()
         .subscribe(
-            data => {
+            (data: any[]) => {
                 const result: string[] = [];
                 data.forEach(
-                    metric => {
+                    (metric: any) => {
                         result.push(`# HELP ${metric[0].metric.name} ${metric[0].metric.help}`);
                         result.push(`# TYPE ${metric[0].metric.name} ${metric[0].metric.metricType}`);
                         metric.forEach(
-                            line => result.push(`${line.metric.name}${line.label?'{'+line.label.join(',')+'}':''} ${line.value}`)
+                            (line: any) => result.push(`${line.metric.name}${line.label?'{'+line.label.join(',')+'}':''} ${line.value}`)
                         );
                     }
                 );
