@@ -25,12 +25,14 @@ You will have to create a targets.yaml before you can start the server!
   label:    target="1"                  # OPTIONAL label for all metrics on this target
   db:                                   # List of DBs to query from
     - number:   7                       # DB number
+      start:    0                       # OPTIONAL to read only a part of the DB
+      size     12                       # OPTIONAL to read only a part of the DB
       metrics:                          # List of metrics to query from DB
         - name:         locked_status   # name of metric as it appears to Prometheus
           datatype:     bool            # Datatype of value in PLC (bool|byte|real|word|dword|int|dint)
           metricType:   gauge           # Type of metric as it appears to Prometheus (currently only gauge is supported)
           help:         Locked Status   # HELP string as it appears to Prometheus
-          offset:       0               # Memory offset of value as defined in STEP 7 (TIA Portal)
+          offset:       0               # Memory offset of value as defined in STEP 7 (TIA Portal) - offset will be added to start value if present
         - name:         extraction_status
           datatype:     bool
           metricType:   gauge
