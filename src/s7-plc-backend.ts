@@ -71,11 +71,15 @@ type AreaReadFunction = (start: number, size: number, callback?: (err: any, data
 export class S7PlcBackend {
     config: Target[];
 
-    constructor() {
-        const configFile = path.join(__dirname, '../config/targets.yaml');
-        console.log('loading config from ', configFile);
-        this.config = Yaml.load(configFile);
-        console.log('config loaded with ', this.config.length, ' targets');
+    constructor(config?: Target[]) {
+        if (config) {
+            this.config = config;
+        } else {
+            const configFile = path.join(__dirname, '../config/targets.yaml');
+            console.log('loading config from ', configFile);
+            this.config = Yaml.load(configFile);
+            console.log('config loaded with ', this.config.length, ' targets');
+        }
     }
 
     getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number): number {
