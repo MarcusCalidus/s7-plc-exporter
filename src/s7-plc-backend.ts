@@ -1,9 +1,13 @@
 import {S7Client} from 'node-snap7';
 import * as Yaml from 'yamljs';
 import * as path from 'path';
-import {concat, merge, Observable, Subscriber} from "rxjs";
-import {groupBy, map, mergeMap, toArray} from "rxjs/internal/operators";
-import {hasOwnProperty} from "tslint/lib/utils";
+import {concat, merge, Observable, Subscriber} from 'rxjs';
+import {groupBy, map, mergeMap, toArray} from 'rxjs/internal/operators';
+
+/** Replaces tslint/lib/utils' hasOwnProperty, which is no longer a dependency. */
+function hasOwnProperty(obj: object, name: string): boolean {
+    return Object.prototype.hasOwnProperty.call(obj, name);
+}
 
 enum Area {
     S7AreaPE = 0x81,
@@ -71,31 +75,36 @@ type AreaReadFunction = (start: number, size: number, callback?: (err: any, data
 export class S7PlcBackend {
     config: Target[];
 
-    constructor() {
-        const configFile = path.join(__dirname, '../config/targets.yaml');
-        console.log('loading config from ', configFile);
-        this.config = Yaml.load(configFile);
-        console.log('config loaded with ', this.config.length, ' targets');
+    constructor(config?: Target[]) {
+        if (config) {
+            this.config = config;
+        } else {
+            const configFile = path.join(__dirname, '../config/targets.yaml');
+            console.log('loading config from ', configFile);
+            this.config = Yaml.load(configFile);
+            console.log('config loaded with ', this.config.length, ' targets');
+        }
     }
 
     getValueAtOffset(buffer: Buffer, datatype: PlcDatatype, offset: number): number {
         switch (datatype) {
-            case "real":
+            case 'real':
                 return buffer.readFloatBE(offset);
-            case "int":
+            case 'int':
                 return buffer.readInt16BE(offset);
-            case "dint":
+            case 'dint':
                 return buffer.readInt32BE(offset);
-            case "word":
+            case 'word':
                 return buffer.readUInt16BE(offset);
-            case "dword":
+            case 'dword':
                 return buffer.readUInt32BE(offset);
-            case "byte":
+            case 'byte':
                 return buffer.readUInt8(offset);
-            case 'bool':
+            case 'bool': {
                 const value = buffer.readUInt8(Math.trunc(offset));
                 const offsetShift = (Math.round((offset % 1) * 10));
                 return (value >> offsetShift) & 1;
+            }
             default:
                 throw new Error('Unknown datatype ' + datatype + ' in config')
         }

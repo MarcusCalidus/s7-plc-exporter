@@ -1,8 +1,8 @@
 import express from 'express';
-import {S7PlcBackend} from "./s7-plc-backend";
+import {S7PlcBackend} from './s7-plc-backend';
 
 const serverPort = 9712;
-const app = express();
+export const app = express();
 const s7PlcBackend = new S7PlcBackend();
 
 app.get('/valuesJson', (req, res) => {
@@ -44,7 +44,9 @@ app.get('/values', (req, res) => {
         );
 });
 
-// start the Express server
-app.listen(serverPort, () => {
-    console.log(`server started at http://localhost:${serverPort}`);
-});
+// start the Express server, unless this module was imported (e.g. by tests) rather than run directly
+if (require.main === module) {
+    app.listen(serverPort, () => {
+        console.log(`server started at http://localhost:${serverPort}`);
+    });
+}
